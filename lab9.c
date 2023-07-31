@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -21,7 +22,7 @@ struct HashType
 
 struct Linkedlist{
 	struct HashType hash;
-	struct Linkedlist *next;
+	struct Linkedlist* next;
 };
 
 // Compute the hash function
@@ -78,7 +79,7 @@ void printRecords(struct RecordType pData[], int dataSz)
 	{
 		printf("\t%d %c %d\n", pData[i].id, pData[i].name, pData[i].order);
 	}
-	printf("\n\n");
+	printf("\n");
 }
 // display records in the hash structure
 // skip the indices which are free
@@ -88,16 +89,18 @@ void displayRecordsInHash(struct Linkedlist *pHashArray, int hashSz)
 {
 	int i;
 
-	printf("Records from Hash Table:\n");
+	printf("\nRecords from Hash Table:\n");
 	for (i=0;i<hashSz;++i){
-		struct Linkedlist *temp = pHashArray + 1;
-		if(temp->hash.status == 'f'){
-			printf("Index %d:\n", i);
+		struct Linkedlist *temp = pHashArray + i;
+		if (temp->hash.status != 'e') 
+        {
+            printf("Index %d:\n", i);
 
-			while(temp != NULL){
-				printf("\tID: %d \tName: %c \tOrder: %d\n", temp->hash.record.id, temp->hash.record.name, temp->hash.record.order);
+            while (temp != NULL)
+            {
+                printf("\tID: %d \tName: %c \tOrder: %d\n", temp->hash.record.id, temp->hash.record.name, temp->hash.record.order);
 
-				temp = temp->next;
+                temp = temp->next;
 			}
 		}
 	}
@@ -111,26 +114,52 @@ int main(void)
 	recordSz = parseData("input.txt", &pRecords);
 	printRecords(pRecords, recordSz);
 	// Your hash implementation
-	struct Linkedlist *arr = malloc(sizeof(struct Linkedlist)*recordSz);
-	int index;
+	struct Linkedlist *arr = malloc(sizeof(struct Linkedlist)*SIZE);
 
-	for (int i = 0; i< recordSz; i++){
-		index = hash(pRecords[i].id);
-		
-		if(arr[index].hash.status != 'f'){
-			arr[index].hash.record = pRecords[i];
-			arr[index].hash.status = 'f';
-			arr[index].next = NULL;
-		}
-		else{
-			struct Linkedlist * newNode = malloc(sizeof(struct Linkedlist));
-			newNode->hash.record = pRecords[i];
-			newNode->hash.status = 'f';
-			newNode->next = arr[index].next;
-			arr[index].next = newNode;
-		}
-	}
+	for (int i = 0; i < SIZE; i++)
+    {
+        arr[i].hash.status = 'e'; // 'e' indicates the slot is empty
+        arr[i].next = NULL;
+    }
 
-	displayRecordsInHash(arr, recordSz);
+    for (int i = 0; i < recordSz; i++)
+    {
+        int index = hash(pRecords[i].id);
 
+        if (arr[index].hash.status == 'e')
+        {
+            arr[index].hash.record = pRecords[i];
+            arr[index].hash.status = 'f'; 
+            arr[index].next = NULL;
+        }
+        else
+        {
+            struct Linkedlist* newNode = malloc(sizeof(struct Linkedlist));
+            newNode->hash.record = pRecords[i];
+            newNode->hash.status = 'f';
+            newNode->next = arr[index].next;
+            arr[index].next = newNode;
+        }
+    }
+
+    
+    displayRecordsInHash(arr, SIZE);
+
+    
+    for (int i = 0; i < SIZE; i++)
+    {
+        struct Linkedlist* temp = arr[i].next;
+        while (temp != NULL)
+        {
+            struct Linkedlist* nextNode = temp->next;
+            free(temp);
+            temp = nextNode;
+        }
+    }
+    free(arr);
+
+   
+    free(pRecords);
+
+    return 0;
 }
